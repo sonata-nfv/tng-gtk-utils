@@ -1,4 +1,3 @@
-[![Build Status](https://jenkins.sonata-nfv.eu/buildStatus/icon?job=tng-gtk-sp/master)](https://jenkins.sonata-nfv.eu/job/tng-gtk-sp/master)
 [![Join the chat at https://gitter.im/sonata-nfv/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sonata-nfv/Lobby)
 
 <p align="center"><img src="https://github.com/sonata-nfv/tng-api-gtw/wiki/images/sonata-5gtango-logo-500px.png" /></p>
@@ -6,69 +5,66 @@
 # 5GTANGO Gatekeeper utils
 This is the 5GTANGO Gatekeeper utils gem, which implements some utilitary features shared across the different Gatekeeper repositories: [`tng-gtk-common`](https://github.com/sonata-nfv/tng-gtk-common), [`tng-gtk-sp`](https://github.com/sonata-nfv/tng-gtk-sp) and [`tng-gtk-vnv`](https://github.com/sonata-nfv/tng-gtk-vnv).
 
-For details on the overall 5GTANGO architecture [please check here](https://5gtango.eu/project-outcomes/deliverables/2-uncategorised/31-d2-2-architecture-design.html). The Gatekeeper is the component highlighted in the following picture.
+The code for this utility library was extracted from those repositories and made available to them so that code shouldn't hang around duplicated.
 
-<p align="center"><img src="https://github.com/sonata-nfv/tng-api-gtw/wiki/images/GKs_place_in_5GTANGO_architecture.png" /></p>
+For details on the overall 5GTANGO architecture please check [here](https://5gtango.eu/project-outcomes/deliverables/2-uncategorised/31-d2-2-architecture-design.html) and also in the [previously](https://github.com/sonata-nfv/tng-gtk-common) [mentioned](https://github.com/sonata-nfv/tng-gtk-sp) [repositories](https://github.com/sonata-nfv/tng-gtk-vnv).
 
-You might also be interested in the following related repositories:
+## Features
+This library implements some of the features that were being duplicated in the 5GTANGO Gatekeeper repositories mentioned above, [`tng-gtk-common`](https://github.com/sonata-nfv/tng-gtk-common), [`tng-gtk-sp`](https://github.com/sonata-nfv/tng-gtk-sp) and [`tng-gtk-vnv`](https://github.com/sonata-nfv/tng-gtk-vnv).
 
-* [V&V and Service Platforms common component](https://github.com/sonata-nfv/tng-gtk-common);
-* [V&V Platform specific component](https://github.com/sonata-nfv/tng-gtk-vnv).
+### Logger
+Ruby's standard library already provides a [Logger](https://ruby-doc.org/stdlib-2.4.0/libdoc/logger/rdoc/Logger.html), which we want to extend and make it providing outputs such as the following (in JSON format):
 
-## Installing / Getting started
-
-This component is implemented in [ruby](https://www.ruby-lang.org/en/), version **2.4.3**. 
-
-### Installing from code
-
-To have it up and running from code, please do the following:
-
-```shell
-$ git clone https://github.com/sonata-nfv/tng-gtk-sp.git # Clone this repository
-$ cd tng-gtk-sp # Go to the newly created folder
-$ bundle install # Install dependencies
-$ PORT=5000 bundle exec rackup # dev server at http://localhost:5000
+```json
+{
+  "type": "I",
+  "timestamp": "2018-10-18 15:49:08 UTC",
+  "status": "END",
+  "component": "tng-api-gtw",
+  "operation": "package upload",
+  "result": "package uploaded 201",
+  "status_code": "201",
+  "time_elapsed": "00:01:20"
+}
 ```
-**Note:** See the [Configuration](#configuration) section below for other environment variables that can be used.
+The usual approach of redefining the formatter (see below) doesn't have the full flexibility. 
 
-Everything being fine, you'll have a server running on that session, on port `5000`. You can aesscc it by using `curl`, like in:
-
-```shell
-$ curl <host name>:5000/
-```
-
-### Installing from the Docker container
-In case you prefer a `docker` based development, you can run the following commands (`bash` shell):
-
-```shell
-$ docker network create tango
-$ docker run -d -p 27017:27017 --net=tango --name mongo mongo
-$ docker run -d -p 5432:5432 --net=tango --name postgres postgres
-$ docker run -d -p 5672:5672 --net=tango --name rabbitmq rabbitmq
-$ docker run -d -p 4011:4011 --net=tango --name tng-cat sonatanfv/tng-cat:dev
-$ docker run -d -p 4012:4012 --net=tango --name tng-rep sonatanfv/tng-rep:dev
-$ docker run -d -p 5000:5000 --net=tango --name tng-gtk-sp \
-  -e CATALOGUE_URL=http://tng-cat:4011/catalogues/api/v2 \
-  -e REPOSITORY_URL=http://tng-cat:4012 \
-  -e MQSERVER_URL=amqp://guest:guest@rabbitmq:5672 \
-  -e POSTGRES_PASSWORD=tango \
-  -e POSTGRES_USER=tangodefault \
-  -e DATABASE_HOST=postgres \
-  -e DATABASE_PORT=5432 \
-  sonatanfv/tng-gtk-sp:dev
+```ruby
+Logger.new(logdev, formatter: proc {|severity, datetime, progname, msg|
+  JSON.dump(timestamp: "#{datetime.to_s}", message: msg)
+})
 ```
 
-**Note:** user and password are mere indicative, please choose the apropriate ones for your deployment.
+It should also support a `LOGLEVEL` variable that may assume one of the usual values `debug`, `info`, `warning`, `error`, `fatal` or `unknown` (defaults to `warning`, so only logging messages marked as `unknown`, `fatal`, `error` or `warning` are shown).
 
-With these commands, you:
+### Cache
+The first ...
+uses Logger
 
-1. Create a `docker` network named `tango`;
-1. Run the [MongoDB](https://www.mongodb.com/) container within the `tango` network;
-1. Run the [PostgreSQL](https://www.postgresql.org/) container within the `tango` network;
-1. Run the [RabbitMQ](https://www.rabbitmq.com/) container within the `tango` network;
-1. Run the [Catalogue](https://github.com/sonata-nfv/tng-cat) container within the `tango` network;
-1. Run the [Repository](https://github.com/sonata-nfv/tng-rep) container within the `tango` network;
-1. Run the [SP-specific Gatekeeper](https://github.com/sonata-nfv/tng-gtk-sp) container within the `tango` network, with the needed environment variables set to the previously created containers.
+### Fetch
+remote 
+uses Cache and Logger
+
+## Installing
+
+This gem is implemented in [ruby](https://www.ruby-lang.org/en/), version **2.4.3**. 
+
+### Installing globally
+
+To install this gem in your system, please do:
+
+```shell
+git clone https://github.com/sonata-nfv/tng-gtk-utils.git # Clone this repository
+cd tng-gtk-utils && gem build tng-gtk-utils.gemspec       # Build the gem
+[sudo] gem install tng-gtk-utils-0.0.1.gem                # Install it (the filename/version may vary)
+```
+### Installing it via a Gemfile
+
+To install this gem using a Gemfile, please add the following line to that file:
+
+```ruby
+gem 'tng-gtk-utils', git: 'https://github.com/sonata-nfv/tng-gtk-utils'
+```
 
 ## Developing
 This section covers all the needs a developer has in order to be able to contribute to this project.
@@ -106,19 +102,12 @@ $ bundle install
 We usually use [`rbenv`](https://github.com/rbenv/rbenv) as the ruby version manager, but others like [`rvm`](https://rvm.io/) may work as well.
 
 ### Setting up Dev
-Developing this micro-service is straightforward with a low amount of necessary steps.
+Developing this library is straightforward with a low amount of necessary steps.
 
-Routes within the micro-service are defined in the [`config.ru`](https://github.com/sonata-nfv/tng-gtk-sp/blob/master/config.ru) file, in the root directory. It has two sections:
 
-* The `require` section, where all used libraries must be required (**Note:** `controllers` had to be required explicitly, while `services` do not, due to a bug we have found to happened in some of the environments);
-* The `map` section, where this micro-service's routes are mapped to the controller responsible for it.
-
-This new or updated route can then be mapped either into an existing controller or imply writing a new controller. This new or updated controller can use either existing or newly written services to fullfil it's role.
-
-For further details on the micro-service's architecture please check the [documentation](https://github.com/sonata-nfv/tng-gtk-sp/wiki/micro-service-architecture).
 
 ### Submiting changes
-Changes to the repository can be requested using [this repository's issues](https://github.com/sonata-nfv/tng-gtk-sp/issues) and [pull requests](https://github.com/sonata-nfv/tng-gtk-sp/pulls) mechanisms.
+Changes to the repository can be requested using [this repository's issues](https://github.com/sonata-nfv/tng-gtk-utils/issues) and [pull requests](https://github.com/sonata-nfv/tng-gtk-utils/pulls) mechanisms.
 
 ## Versioning
 
