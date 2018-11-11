@@ -37,12 +37,34 @@ Logger.new(logdev, formatter: proc {|severity, datetime, progname, msg|
 
 It should also support a `LOGLEVEL` variable that may assume one of the usual values `debug`, `info`, `warning`, `error`, `fatal` or `unknown` (defaults to `warning`, so only logging messages marked as `unknown`, `fatal`, `error` or `warning` are shown).
 
+#### Dependencies
+
 ### Cache
 The first ...
+
+The `Tng::Gtk::Utils`' cache API is detailled in the following sub-sections.
+
+```ruby
+require `tng/gtk/utils'
+
+# ...
+# Cache 
+cache {uuid: '4345444a-d659-4843-a618-ea43b8a1f9ba', whatever: 'else'}
+# ...
+
+# ...
+# Check if we've got ir cached
+x = cached? '4345444a-d659-4843-a618-ea43b8a1f9ba'
+# ...
+```
+
+#### Dependencies
 uses Logger
 
 ### Fetch
-remote 
+The `Fetch` class works very much like Euby-on-Rails' `ActiveModel` gem, without all the complexities around it.
+
+#### Dependencies
 uses Cache and Logger
 
 ## Installing
