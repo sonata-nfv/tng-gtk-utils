@@ -42,16 +42,28 @@ It should also support a `LOGLEVEL` variable that may assume one of the usual va
 ### Cache
 The first ...
 
-The `Tng::Gtk::Utils`' cache API is detailled in the following sub-sections.
+The `Tng::Gtk::Utils`' cache API is detailled next.
+
+To use this, you need to require this library (`tng/gtk/utils`):
 
 ```ruby
 require `tng/gtk/utils'
+```
 
+Then, in the `module` or `class` you want to use cache, just extend the module:
+```ruby
 # ...
-# Cache 
+  extend Tng::Gtk::Utils
+# ...
+```
+
+Whenever you want to cache an `Hash`, just use the `cache` macro (or `module method`):
+```ruby
+# ...
 cache {uuid: '4345444a-d659-4843-a618-ea43b8a1f9ba', whatever: 'else'}
 # ...
-
+```
+```ruby
 # ...
 # Check if we've got ir cached
 x = cached? '4345444a-d659-4843-a618-ea43b8a1f9ba'
