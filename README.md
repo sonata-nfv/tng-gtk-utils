@@ -63,7 +63,7 @@ Whenever you want to cache an `Hash`, just use the `cache` macro (or `module met
 ```ruby
 cache {uuid: '4345444a-d659-4843-a618-ea43b8a1f9ba', whatever: 'else'}
 ```
-For checking if we've got some `UUID` cached, just use the `cached?` nacro:
+For checking if we've got some `UUID` cached, just use the `cached?` macro:
 
 ```ruby
 x = cached? '4345444a-d659-4843-a618-ea43b8a1f9ba'
