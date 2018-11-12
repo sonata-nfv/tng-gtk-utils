@@ -84,7 +84,7 @@ class Fetch
       cached = cached? params[:uuid] # now check if we've got this cached
       return JSON.parse(cached, symbolize_names: :true) if cached
 
-      real_value = fecth_real_value # if here, then it's not cached: fetch real value
+      real_value = fetch_real_value # if here, then it's not cached: fetch real value
       cache real_value.to_json # and cache it for next time (and return it)
     end
   end  
