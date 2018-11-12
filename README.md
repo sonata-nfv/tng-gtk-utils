@@ -37,25 +37,58 @@ Logger.new(logdev, formatter: proc {|severity, datetime, progname, msg|
 
 It should also support a `LOGLEVEL` variable that may assume one of the usual values `debug`, `info`, `warning`, `error`, `fatal` or `unknown` (defaults to `warning`, so only logging messages marked as `unknown`, `fatal`, `error` or `warning` are shown).
 
+#### Example
+```ruby
+```
+
 #### Dependencies
 
 ### Cache
 The first ...
 
-The `Tng::Gtk::Utils`' cache API is detailled in the following sub-sections.
+The `Tng::Gtk::Utils`' cache API is detailled next.
+
+To use this, you need to require this library (`tng/gtk/utils`):
 
 ```ruby
 require `tng/gtk/utils'
+```
 
-# ...
-# Cache 
-cache {uuid: '4345444a-d659-4843-a618-ea43b8a1f9ba', whatever: 'else'}
-# ...
+Then, in the `module` or `class` you want to use cache, just extend the module:
+```ruby
+  extend Tng::Gtk::Utils
+```
 
-# ...
-# Check if we've got ir cached
+Whenever you want to cache an `Hash`, just use the `cache` macro (or `module method`):
+```ruby
+cache {uuid: '4345444a-d659-4843-a618-ea43b8a1f9ba', whatever: 'else'}.to_json
+```
+For checking if we've got some `UUID` cached, just use the `cached?` macro:
+
+```ruby
 x = cached? '4345444a-d659-4843-a618-ea43b8a1f9ba'
-# ...
+```
+
+#### Example
+```ruby
+require 'json'
+require `tng/gtk/utils'
+
+class Fetch
+  extend Tng::Gtk::Utils
+  
+  class << self
+    def call(params)
+      do_validation_stuff
+      
+      cached = cached? params[:uuid] # now check if we've got this cached
+      return JSON.parse(cached, symbolize_names: :true) if cached
+
+      real_value = fetch_real_value # if here, then it's not cached: fetch real value
+      cache real_value.to_json # and cache it for next time (and return it)
+    end
+  end  
+end
 ```
 
 #### Dependencies
@@ -63,6 +96,10 @@ uses Logger
 
 ### Fetch
 The `Fetch` class works very much like Euby-on-Rails' `ActiveModel` gem, without all the complexities around it.
+
+#### Example
+```ruby
+```
 
 #### Dependencies
 uses Cache and Logger
