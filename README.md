@@ -37,6 +37,10 @@ Logger.new(logdev, formatter: proc {|severity, datetime, progname, msg|
 
 It should also support a `LOGLEVEL` variable that may assume one of the usual values `debug`, `info`, `warning`, `error`, `fatal` or `unknown` (defaults to `warning`, so only logging messages marked as `unknown`, `fatal`, `error` or `warning` are shown).
 
+#### Example
+```ruby
+```
+
 #### Dependencies
 
 ### Cache
@@ -52,22 +56,33 @@ require `tng/gtk/utils'
 
 Then, in the `module` or `class` you want to use cache, just extend the module:
 ```ruby
-# ...
   extend Tng::Gtk::Utils
-# ...
 ```
 
 Whenever you want to cache an `Hash`, just use the `cache` macro (or `module method`):
 ```ruby
-# ...
 cache {uuid: '4345444a-d659-4843-a618-ea43b8a1f9ba', whatever: 'else'}
-# ...
 ```
+For checking if we've got some `UUID` cached, just use the `cached?` nacro:
+
 ```ruby
-# ...
-# Check if we've got ir cached
 x = cached? '4345444a-d659-4843-a618-ea43b8a1f9ba'
-# ...
+```
+
+#### Example
+```ruby
+require `tng/gtk/utils'
+
+class Fetch
+  extend Tng::Gtk::Utils
+  
+  class << self
+    def call(params)
+    
+    end
+  end
+  
+end
 ```
 
 #### Dependencies
@@ -75,6 +90,10 @@ uses Logger
 
 ### Fetch
 The `Fetch` class works very much like Euby-on-Rails' `ActiveModel` gem, without all the complexities around it.
+
+#### Example
+```ruby
+```
 
 #### Dependencies
 uses Cache and Logger
