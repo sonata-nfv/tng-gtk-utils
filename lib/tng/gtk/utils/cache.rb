@@ -32,73 +32,73 @@
 # encoding: utf-8
 # frozen_string_literal: true
 require 'redis'
+require 'json'
+require 'tng/gtk/utils/logger'
 
 module Tng
   module Gtk
     module Utils
+      class RedisCache 
+        class << self; attr_accessor :store; end
+        #def store=(value) self.class.store = value end
+        #def store() self.class.store end
+
+        begin
+          self.store = Redis.new
+        rescue StandardError => e
+          e.inspect
+          e.message
+        end
+        def self.set(key, val) self.store.set(key, val) end
+        def self.get(key)      self.store.get(key) end
+        def self.del(key)      self.store.del(key) end
+      end
+
+      class MemoryCache
+        class << self; attr_accessor :store; end
+        #def store=(value) self.class.store = value end
+        #def store() self.class.store end
+        self.store = {}
+        def self.set(key, val) self.store[key] = val end
+        def self.get(key)      self.store[key] end
+        def self.del(key)      self.store[key] = nil end
+      end
+
       class Cache
-  
-        class RedisCache 
-          class << self
-            attr_accessor :store
-          end
-    
-          def store=(value) self.class.store = value end
-          def store() self.class.store end
-
-          begin
-            self.store = Redis.new
-          rescue StandardError => e
-            e.inspect
-            e.message
-          end
-          def self.set(key, val) self.store.set(key, val) end
-          def self.get(key)      self.store.get(key) end
-          def self.del(key)      self.store.set(key, nil) end
-        end
-  
-        class MemoryCache
-          class << self
-            attr_accessor :store
-          end
-          def store=(value) self.class.store = value end
-          def store() self.class.store end
-          self.store = {}
-          def self.set(key, val) self.store[key] = val end
-          def self.get(key)      self.store[key] end
-          def self.del(key)      self.store[key] = nil end
-        end
-
+        CACHE_PREFIX='cache'
+        LOG_COMPONENT='Tng::Gtk::Utils::Cache'
         STRATEGIES = {
-          redis: RedisCache, 
+          redis: RedisCache,
           memory: MemoryCache
         }
-        class << self
-          attr_accessor :strategy
-        end
+        class << self; attr_accessor :strategy; end
 
-        def strategy=(value) self.class.strategy = value end
-        def strategy() self.class.strategy end
-  
+        #def strategy=(value) self.class.strategy = value end
+        #def strategy() self.class.strategy end
+
         self.strategy = ENV['REDIS_URL'] ? STRATEGIES[:redis] : STRATEGIES[:memory]
-        STDERR.puts "Strategy used: #{self.strategy}"
-  
-        def self.set(records)
-          if records.is_a?(Hash)
-            STDERR.puts "Setting key '#{records[:uuid]}' with value '#{records}' (strategy #{self.strategy})"
-            self.strategy.set(records[:uuid], records) if records.key?(:uuid)
-            return
+        Tng::Gtk::Utils::Logger.info(start_stop: 'START', component:'Tng::Gtk::Utils::Cache', operation:'class definition', message:"Strategy used: #{self.strategy}") 
+
+        def self.cache(record)
+          unless record.key?(:uuid)
+            Tng::Gtk::Utils::Logger.error(component: LOG_COMPONENT, operation:'.cache', message:"Cache key :uuid is missing in record #{record}") 
+            return nil
           end
-          records.each do |record|
-            STDERR.puts "Setting key '#{record[:uuid]}' with value '#{record}' (strategy #{self.strategy})"
-            self.strategy.set(record[:uuid], record) if record.key?(:uuid)
-          end
+          Tng::Gtk::Utils::Logger.info(component: LOG_COMPONENT, operation:'.cache', message:"Cache key '#{CACHE_PREFIX}:#{record[:uuid]}' with value '#{record}' (strategy #{self.strategy})") 
+          self.strategy.set("#{CACHE_PREFIX}:#{record[:uuid]}", record.to_json)
+          record
         end
-        def self.get(key)
-          STDERR.puts "Getting key '#{key}' (strategy #{self.strategy})"
-          self.strategy.get(key)
+        def self.cached?(key)
+          Tng::Gtk::Utils::Logger.info(component: LOG_COMPONENT, operation:'.cached?', message:"Cached? key '#{CACHE_PREFIX}:#{key}' (strategy #{self.strategy})")
+          data = self.strategy.get("#{CACHE_PREFIX}:#{key}")
+          return '' if data.nil?
+          JSON.parse(data, symbolize_names: :true) 
         end
-        def self.del(key)      self.strategy.del(key) end
+        def self.clear(key)
+          Tng::Gtk::Utils::Logger.info(component: LOG_COMPONENT, operation:'.clear', message:"Clearing key '#{key}' (strategy #{self.strategy})")
+          self.strategy.del(key)
+        end
+        Tng::Gtk::Utils::Logger.info(start_stop: 'STOP', component:'Tng::Gtk::Utils::Cache', operation:'class definition', message:"Strategy used: #{self.strategy}") 
       end
     end
   end

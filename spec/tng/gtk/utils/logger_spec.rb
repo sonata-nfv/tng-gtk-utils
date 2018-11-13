@@ -31,13 +31,11 @@
 ## partner consortium (www.5gtango.eu).
 # encoding: utf-8
 # frozen_string_literal: true
-require_relative '../../spec_helper'
-require 'securerandom'
-require 'json'
-require 'tng/gtk/utils'
+require_relative '../../../spec_helper'
+require 'tng/gtk/utils/logget'
 
-RSpec.describe Tng::Gtk::Utils do
-  it "has a version number" do
-    expect(Tng::Gtk::Utils::VERSION).not_to be nil
-  end
+RSpec.describe Tng::Gtk::Utils::Logger do
+    it 'should cache passed data' do
+      Tng::Gtk::Utils::Logger.error(start_stop: 'START', component:'Tng::Gtk::Utils::Logger', operation: 'Tests', message:'Just testing', status: '', time_elapsed:'')
+    end
 end

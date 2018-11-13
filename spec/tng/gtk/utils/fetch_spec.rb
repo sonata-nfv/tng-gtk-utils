@@ -31,13 +31,17 @@
 ## partner consortium (www.5gtango.eu).
 # encoding: utf-8
 # frozen_string_literal: true
-require_relative '../../spec_helper'
-require 'securerandom'
-require 'json'
-require 'tng/gtk/utils'
+require_relative '../../../spec_helper'
+require 'tng/gtk/utils/fetch'
 
-RSpec.describe Tng::Gtk::Utils do
-  it "has a version number" do
-    expect(Tng::Gtk::Utils::VERSION).not_to be nil
+RSpec.describe Tng::Gtk::Utils::Fetch do
+  context 'with UUID' do
+    let(:data) {{uuid: SecureRandom.uuid, whatever: 'else'}}
+    it 'should cache passed data' do
+      cache
+    end
+  end
+  context 'without UUID' do
+    it 'should not cache passed data'
   end
 end
