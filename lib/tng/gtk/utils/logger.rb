@@ -44,28 +44,28 @@ module Tng
         LOGGER_LEVELS = ['D', 'I', 'W', 'E', 'F', 'U'].freeze
         
         class << self
-          def error(start_stop: '', component:, operation:, message:, status: , time_elapsed:)
-            generic(type: 'E', start_stop: start_stop, component:component, operation: operation, message:message, status: status, time_elapsed:time_elapsed)
+          def error(start_stop: '', component:, operation:, message:, status:'', time_elapsed:'')
+            generic(type: 'E', start_stop: start_stop, component: component, operation: operation, message: message, status: status, time_elapsed: time_elapsed)
           end
-          def warning(start_stop: '', component:, operation: , message:, status: , time_elapsed:)
-            generic(type: 'W', start_stop: start_stop, component:component, operation:operation, message:message, status:status, time_elapsed:time_elapsed)
+          def warning(start_stop: '', component:, operation: , message:, status:'', time_elapsed:'')
+            generic(type: 'W', start_stop: start_stop, component: component, operation: operation, message: message, status: status, time_elapsed: time_elapsed)
           end
-          def info(start_stop: '', component:, operation: , message:, status: , time_elapsed:)
-            generic(type: 'I', start_stop: start_stop, component:component, operation:operation, message:message, status:status, time_elapsed:time_elapsed)
+          def info(start_stop: '', component:, operation:, message:, status:'', time_elapsed:'')
+            generic(type: 'I', start_stop: start_stop, component: component, operation: operation, message: message, status: status, time_elapsed: time_elapsed)
           end
-          def fatal(start_stop: '', component:, operation: , message:, status: , time_elapsed:)
-            generic(type: 'F', start_stop: start_stop, component:component, operation:operation, message:message, status:status, time_elapsed:time_elapsed)
+          def fatal(start_stop: '', component:, operation: , message:, status:'', time_elapsed:'')
+            generic(type: 'F', start_stop: start_stop, component: component, operation: operation, message: message, status: status, time_elapsed: time_elapsed)
           end
           def debug(start_stop: '', component:, operation:, message:, status:'', time_elapsed:'')
-            generic(type: 'D', start_stop: start_stop, component:component, operation:operation, message:message, status:status, time_elapsed:time_elapsed)
+            generic(type: 'D', start_stop: start_stop, component: component, operation: operation, message: message, status: status, time_elapsed: time_elapsed)
           end
-          def unknown(start_stop: '', component:, operation: , message:, status: , time_elapsed:)
-            generic(type: 'U', start_stop: start_stop, component: component, operation:operation, message: message, status:status, time_elapsed: time_elapsed)
+          def unknown(start_stop: '', component:, operation: , message:, status:'', time_elapsed:'')
+            generic(type: 'U', start_stop: start_stop, component:  component, operation: operation, message: message, status: status, time_elapsed: time_elapsed)
           end
             
           private
           def generic(type:, start_stop:, component:, operation:, message:, status:, time_elapsed:) 
-            LOGFILE.puts "#{{
+            message = {
               type: type,                 # mandatory, can be I(nfo), W(arning), D(ebug), E(rror), F(atal) or U(nknown)
               timestamp: Time.now.utc, # mandatory
               start_stop: start_stop,                    # optional, can be empty, 'START' or 'STOP'
@@ -74,11 +74,13 @@ module Tng
               message: message,      # mandatory
               status: status,                        # optional, makes sense for start_stop='END'
               time_elapsed: time_elapsed              # optional, makes sense for start_stop='END'
-            }.to_json}" if logger_level(type) < LOGLEVEL
+            }
+            LOGFILE.puts "#{message.to_json}" if log?(type)
+            message
           end
           
-          def logger_level(level)
-            LOGGER_LEVELS.find_index(LOGGER_LEVELS[level])
+          def log?(level)
+            LOGGER_LEVELS.index(level) >= LOGGER_LEVELS.index(LOGLEVEL[0].upcase)
           end
         end
       end
