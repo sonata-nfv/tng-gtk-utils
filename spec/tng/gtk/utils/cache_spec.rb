@@ -31,13 +31,31 @@
 ## partner consortium (www.5gtango.eu).
 # encoding: utf-8
 # frozen_string_literal: true
-require_relative '../../spec_helper'
+require_relative '../../../spec_helper'
 require 'securerandom'
 require 'json'
-require 'tng/gtk/utils'
+require 'tng/gtk/utils/cache'
 
-RSpec.describe Tng::Gtk::Utils do
-  it "has a version number" do
-    expect(Tng::Gtk::Utils::VERSION).not_to be nil
+class DummyClass
+end
+
+RSpec.describe Tng::Gtk::Utils::Cache do
+  context 'with UUID' do
+    let(:data) {{uuid: SecureRandom.uuid, whatever: 'else'}}
+    it 'should have no cached data for unknown key' do
+      STDERR.puts "nil? #{Tng::Gtk::Utils::Cache.cached?(SecureRandom.uuid)}"   
+      expect(Tng::Gtk::Utils::Cache.cached?(SecureRandom.uuid)).to be_empty
+    end
+    it 'should cache passed data' do      
+      Tng::Gtk::Utils::Cache.cache data
+      expect(Tng::Gtk::Utils::Cache.cached?(data[:uuid])).to eq(data)
+    end
+  end
+  context 'without UUID' do
+    let(:data) {{whatever: 'else'}}
+    it 'should not cache passed data' do      
+      Tng::Gtk::Utils::Cache.cache data
+      expect(Tng::Gtk::Utils::Cache.cache(data)).to be_nil
+    end
   end
 end

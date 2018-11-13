@@ -41,12 +41,12 @@ module Tng
     module Utils
 
       class Fetch
-        class << self
-          attr_accessor :site
-        end
+        NO_CACHE=ENV.fetch('NO_CACHE', nil)
+        
+        class << self; attr_accessor :site; end
 
-        def site=(value) self.class.site = value end
-        def site() self.class.site end
+        #def site=(value) self.class.site = value end
+        #def site() self.class.site end
   
         def self.call(params)
           msg=self.name+'#'+__method__.to_s
@@ -54,10 +54,9 @@ module Tng
           original_params = params.dup
           begin
             if params.key?(:uuid)
-              cached = Tng::Gtk::Utils::Cache.get(params[:uuid])
-              if cached
-                STDERR.puts "#{msg}: cached=#{cached}"
-                return cached
+              unless NO_CACHE
+                cached = Tng::Gtk::Utils::Cache.cached?(params[:uuid])
+                return cached if cached
               end
               uuid = params.delete :uuid
               uri = URI.parse("#{self.site}/#{uuid}")
@@ -76,27 +75,39 @@ module Tng
               body = response.read_body
               STDERR.puts "#{msg}: 200 (Ok) body=#{body}"
               result = JSON.parse(body, quirks_mode: true, symbolize_names: true)
-              Tng::Gtk::Utils::Cache.set(result)
+              cache_result(result)
               return result
             when Net::HTTPNotFound
-              STDERR.puts "#{msg}: 404 Not found) body=#{body}"
+              STDERR.puts "#{msg}: 404 Not found body=#{body}"
               return {} unless uuid.nil?
               return []
             else
-              return nil # ArgumentError.new("#{response.message}")
+              STDERR.puts "#{msg}: #{response.message}"
+              return nil
             end
           rescue Exception => e
-            STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, msg, e.message]
+            STDERR.puts "E, #{Time.now.utc} #{msg}: #{e.message}"
           end
           nil
         end
   
         private
-        # TODO: Get this out of here!
         def self.sanitize(params)
           params[:page_number] ||= ENV.fetch('DEFAULT_PAGE_NUMBER', 0)
           params[:page_size]   ||= ENV.fetch('DEFAULT_PAGE_SIZE', 100)
           params
+        end
+  
+        def self.cache_result(result)
+          msg=self.name+'#'+__method__.to_s
+          STDERR.puts "#{msg} result=#{result})"
+          if result.is_a?(Hash)      
+            Tng::Gtk::Utils::Cache.cache(result)
+            return
+          end
+          result.each do |record|
+            Tng::Gtk::Utils::Cache.cache(ecord)
+          end
         end
       end
     end
