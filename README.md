@@ -17,17 +17,27 @@ Ruby's standard library already provides a [Logger](https://ruby-doc.org/stdlib-
 
 ```json
 {
-  "type": "I",                 # mandatory, can be I(nfo), W(arning), D(ebug), E(rror), F(atal) or U(nknown)
-  "timestamp": "2018-10-18 15:49:08 UTC", # mandatory
-  "start_stop": "STOP",                   # optional, can be empty, 'START' or 'STOP'
-  "component": "tng-api-gtw",             # mandatory
-  "operation": "package upload",          # mandatory
-  "message": "package uploaded 201",      # mandatory
-  "status": "201",                        # optional, makes sense for start_stop='END'
-  "time_elapsed": "00:01:20"              # optional, makes sense for start_stop='END'
+  "type": "I",
+  "timestamp": "2018-10-18 15:49:08 UTC",
+  "start_stop": "STOP",
+  "component": "tng-api-gtw",
+  "operation": "package upload",
+  "message": "package uploaded 201",
+  "status": "201",
+  "time_elapsed": "00:01:20"
 }
 ```
-The usual approach of redefining the formatter (see below) doesn't have the full flexibility we need: 
+These fields have the following meanings/values:
+* `type`: **mandatory**, can be `I`(nfo), `W`(arning), `D`(ebug), `E`(rror), `F`(atal) or `U`(nknown);
+* `timestamp`: **mandatory**, it's the timestamp of the logged message, in UTC format;
+* `start_stop`: optional (can be empty), `START` or `STOP`
+* `component`: **mandatory**, holds the name of the component logging the message;
+* `operation`: **mandatory**, holds the operation logging the message;
+* `message`: **mandatory**, the message to be logged;
+* `status`: optional, makes sense for `start_stop='STOP'`, e.g., to hold the HTTP status;
+* `time_elapsed`: optional, makes sense for `start_stop='STOP'`, to hold the time the operation took to complete.
+
+The usual approach of redefining the formatter in the `Logger` standard library (see below) doesn't have the full flexibility we need: 
 
 ```ruby
 Logger.new(logdev, formatter: proc {|severity, datetime, progname, msg|
@@ -58,7 +68,7 @@ LOGGER.info(component: LOG_COMPONENT, operation:__method__.to_s, message:"Done!"
 #### Dependencies
 The `Tng::Gtk::Utils::Logger` class depends on the following ruby gems:
 
-* 'json';
+* `json`;
 
 ### Cache
 The first ...
