@@ -34,6 +34,7 @@
 require 'net/http'
 require 'json'
 require 'redis'
+require 'tng/gtk/utils/logger'
 require 'tng/gtk/utils/cache'
 
 module Tng
@@ -50,7 +51,8 @@ module Tng
   
         def self.call(params)
           msg=self.name+'#'+__method__.to_s
-          STDERR.puts "#{msg}: params=#{params} site=#{self.site}"
+          began_at=Time.now.utc
+          Tng::Gtk::Utils::Logger.info(start_stop: 'START', component:self.name, operation:__method__.to_s, message:"params=#{params} site=#{self.site}")
           original_params = params.dup
           begin
             if params.key?(:uuid)
@@ -65,28 +67,29 @@ module Tng
               uri = URI.parse(self.site)
               uri.query = URI.encode_www_form(sanitize(params))
             end
-            STDERR.puts "#{msg}: uri=#{uri}"
+            Tng::Gtk::Utils::Logger.debug(component:self.name, operation:__method__.to_s, message:"uri=#{uri}")
             request = Net::HTTP::Get.new(uri)
             request['content-type'] = 'application/json'
             response = Net::HTTP.start(uri.hostname, uri.port) {|http| http.request(request)}
-            STDERR.puts "#{msg}: response=#{response.inspect}"
+            Tng::Gtk::Utils::Logger.debug(component:self.name, operation:__method__.to_s, message:"response=#{response.inspect}")
             case response
             when Net::HTTPSuccess
               body = response.read_body
-              STDERR.puts "#{msg}: 200 (Ok) body=#{body}"
+              Tng::Gtk::Utils::Logger.debug(component:self.name, operation:__method__.to_s, message:"body=#{body}", status: '200')
               result = JSON.parse(body, quirks_mode: true, symbolize_names: true)
               cache_result(result)
+              Tng::Gtk::Utils::Logger.info(start_stop: 'STOP', component:self.name, operation:__method__.to_s, message:"result=#{result} site=#{self.site}", time_elapsed: Time.now.utc - began_at)
               return result
             when Net::HTTPNotFound
-              STDERR.puts "#{msg}: 404 Not found body=#{body}"
+              Tng::Gtk::Utils::Logger.info(start_stop: 'STOP', component:self.name, operation:__method__.to_s, message:"body=#{body}", status:'404', time_elapsed: Time.now.utc - began_at)
               return {} unless uuid.nil?
               return []
             else
-              STDERR.puts "#{msg}: #{response.message}"
+              Tng::Gtk::Utils::Logger.error(start_stop: 'STOP', component:self.name, operation:__method__.to_s, message:"#{response.message}", status:'404', time_elapsed: Time.now.utc - began_at)
               return nil
             end
           rescue Exception => e
-            STDERR.puts "E, #{Time.now.utc} #{msg}: #{e.message}"
+            Tng::Gtk::Utils::Logger.error(start_stop: 'STOP', component:self.name, operation:__method__.to_s, message:"#{e.message}", time_elapsed: Time.now.utc - began_at)
           end
           nil
         end
@@ -99,8 +102,7 @@ module Tng
         end
   
         def self.cache_result(result)
-          msg=self.name+'#'+__method__.to_s
-          STDERR.puts "#{msg} result=#{result})"
+          Tng::Gtk::Utils::Logger.debug(component:self.name, operation:__method__.to_s, message:"result=#{result}")
           if result.is_a?(Hash)      
             Tng::Gtk::Utils::Cache.cache(result)
             return
