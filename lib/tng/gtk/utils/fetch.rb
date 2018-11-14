@@ -42,12 +42,8 @@ module Tng
     module Utils
 
       class Fetch
-        NO_CACHE=ENV.fetch('NO_CACHE', nil)
         
         class << self; attr_accessor :site; end
-
-        #def site=(value) self.class.site = value end
-        #def site() self.class.site end
   
         def self.call(params)
           msg=self.name+'#'+__method__.to_s
@@ -56,9 +52,11 @@ module Tng
           original_params = params.dup
           begin
             if params.key?(:uuid)
-              unless NO_CACHE
+              no_cache=ENV.fetch('NO_CACHE', nil)
+              
+              unless no_cache
                 cached = Tng::Gtk::Utils::Cache.cached?(params[:uuid])
-                return cached if cached
+                return cached unless (cached.nil? || cached.empty?)
               end
               uuid = params.delete :uuid
               uri = URI.parse("#{self.site}/#{uuid}")
@@ -104,11 +102,14 @@ module Tng
         def self.cache_result(result)
           Tng::Gtk::Utils::Logger.debug(component:self.name, operation:__method__.to_s, message:"result=#{result}")
           if result.is_a?(Hash)      
+            STDERR.puts "Caching #{result}"
             Tng::Gtk::Utils::Cache.cache(result)
             return
           end
+          STDERR.puts "#{result} is not an Hash"
           result.each do |record|
-            Tng::Gtk::Utils::Cache.cache(ecord)
+            STDERR.puts "Caching #{record}"
+            Tng::Gtk::Utils::Cache.cache(record)
           end
         end
       end

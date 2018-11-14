@@ -32,7 +32,7 @@
 # encoding: utf-8
 # frozen_string_literal: true
 require_relative '../../../spec_helper'
-require 'tng/gtk/utils/logget'
+require 'tng/gtk/utils/logger'
 
 RSpec.describe Tng::Gtk::Utils::Logger do
     it 'should cache passed data' do

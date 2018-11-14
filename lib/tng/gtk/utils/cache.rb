@@ -96,7 +96,7 @@ module Tng
           LOGGER.info(component: LOG_COMPONENT, operation:__method__.to_s, message:"key '#{key}' (strategy #{self.strategy})")
           self.strategy.del(key)
         end
-        LOGGER.info(start_stop: 'STOP', component:'Tng::Gtk::Utils::Cache', operation:'class definition', message:"Strategy used: #{self.strategy}") 
+        LOGGER.info(start_stop: 'STOP', component:LOG_COMPONENT, operation:'class definition', message:"Strategy used: #{self.strategy}") 
       end
     end
   end

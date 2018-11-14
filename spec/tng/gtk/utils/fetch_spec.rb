@@ -33,15 +33,33 @@
 # frozen_string_literal: true
 require_relative '../../../spec_helper'
 require 'tng/gtk/utils/fetch'
+require 'securerandom'
 
 RSpec.describe Tng::Gtk::Utils::Fetch do
-  context 'with UUID' do
-    let(:data) {{uuid: SecureRandom.uuid, whatever: 'else'}}
-    it 'should cache passed data' do
-      cache
+  let(:data) {{uuid: SecureRandom.uuid, whatever: 'else'}}
+  context 'with NO_CACHE' do
+    it 'should fetch requested data' do
+      allow(ENV).to receive(:[]).with("NO_CACHE").and_return("true")
+      Tng::Gtk::Utils::Fetch.site='http://example.com'
+      WebMock.stub_request(:get, Tng::Gtk::Utils::Fetch.site+'/'+data[:uuid]).to_return(body: data.to_json, status: 200)
+      expect(Tng::Gtk::Utils::Fetch.call({uuid: data[:uuid]})).to eq(data)
     end
   end
-  context 'without UUID' do
-    it 'should not cache passed data'
+  context 'without NO_CACHE' do
+    before(:each){allow(ENV).to receive(:[]).with("NO_CACHE").and_return("")}
+    it 'should cache passed data the first time' do
+      allow(Tng::Gtk::Utils::Cache).to receive(:cached?).with(data[:uuid]).and_return('')
+      allow(Tng::Gtk::Utils::Cache).to receive(:cache).with(data).and_return(data)
+      Tng::Gtk::Utils::Fetch.site='http://example.com'
+      WebMock.stub_request(:get, Tng::Gtk::Utils::Fetch.site+'/'+data[:uuid]).to_return(body: data.to_json, status: 200)
+      Tng::Gtk::Utils::Fetch.call({uuid: data[:uuid]})
+      expect(Tng::Gtk::Utils::Cache).to have_received(:cache).with(data)
+    end
+    it 'should fetch from cache passed data the next time' do
+      allow(Tng::Gtk::Utils::Cache).to receive(:cached?).with(data[:uuid]).and_return(data)
+      allow(Tng::Gtk::Utils::Cache).to receive(:cache).with(data).and_return(data)
+      Tng::Gtk::Utils::Fetch.call({uuid: data[:uuid]})
+      expect(Tng::Gtk::Utils::Cache).not_to have_received(:cache).with(data)
+    end
   end
 end
