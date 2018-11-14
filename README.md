@@ -13,21 +13,21 @@ For details on the overall 5GTANGO architecture please check [here](https://5gta
 This library implements some of the features that were being duplicated in the 5GTANGO Gatekeeper repositories mentioned above, [`tng-gtk-common`](https://github.com/sonata-nfv/tng-gtk-common), [`tng-gtk-sp`](https://github.com/sonata-nfv/tng-gtk-sp) and [`tng-gtk-vnv`](https://github.com/sonata-nfv/tng-gtk-vnv).
 
 ### Logger
-Ruby's standard library already provides a [Logger](https://ruby-doc.org/stdlib-2.4.0/libdoc/logger/rdoc/Logger.html), which we want to extend and make it providing outputs such as the following (in JSON format):
+Ruby's standard library already provides a [Logger](https://ruby-doc.org/stdlib-2.4.0/libdoc/logger/rdoc/Logger.html), which we want to extend and make it providing outputs such as the following (in JSON format -- see [this user story](https://git.cs.upb.de/5gtango/UserStories/issues/376), authentication is needed):
 
 ```json
 {
-  "type": "I",
-  "timestamp": "2018-10-18 15:49:08 UTC",
-  "status": "END",
-  "component": "tng-api-gtw",
-  "operation": "package upload",
-  "result": "package uploaded 201",
-  "status_code": "201",
-  "time_elapsed": "00:01:20"
+  "type": "I",                 # mandatory, can be I(nfo), W(arning), D(ebug), E(rror), F(atal) or U(nknown)
+  "timestamp": "2018-10-18 15:49:08 UTC", # mandatory
+  "start_stop": "STOP",                   # optional, can be empty, 'START' or 'STOP'
+  "component": "tng-api-gtw",             # mandatory
+  "operation": "package upload",          # mandatory
+  "message": "package uploaded 201",      # mandatory
+  "status": "201",                        # optional, makes sense for start_stop='END'
+  "time_elapsed": "00:01:20"              # optional, makes sense for start_stop='END'
 }
 ```
-The usual approach of redefining the formatter (see below) doesn't have the full flexibility. 
+The usual approach of redefining the formatter (see below) doesn't have the full flexibility we need: 
 
 ```ruby
 Logger.new(logdev, formatter: proc {|severity, datetime, progname, msg|
@@ -35,13 +35,30 @@ Logger.new(logdev, formatter: proc {|severity, datetime, progname, msg|
 })
 ```
 
-It should also support a `LOGLEVEL` variable that may assume one of the usual values `debug`, `info`, `warning`, `error`, `fatal` or `unknown` (defaults to `warning`, so only logging messages marked as `unknown`, `fatal`, `error` or `warning` are shown).
+It should also support a `LOGLEVEL` variable that may assume one of the usual values `debug`, `info`, `warning`, `error`, `fatal` or `unknown` (defaults to `info`, so only logging messages marked as `unknown`, `fatal`, `error`, `warning` or `info` are shown -- see [this user story](https://git.cs.upb.de/5gtango/UserStories/issues/410)).
+
+This output is achieved by calling methods such as `Logger.debug(...)`, with the minimum number of mandatory fields.
 
 #### Example
+An example of using the above described logger is the following:
 ```ruby
+LOG_COMPONENT=self.name
+LOGGER=Tng::Gtk::Utils::Logger
+...
+LOGGER.error(component: LOG_COMPONENT, operation:__method__.to_s, message:"key :uuid is missing in record #{record}") 
+```
+
+For example, if the `time_elapsed` field is to be filled, we can do the following:
+```ruby
+began_at = Time.now.utc
+do_some_lengthy_processing()
+LOGGER.info(component: LOG_COMPONENT, operation:__method__.to_s, message:"Done!", time_elapsed: Time.now.utc-began_at) 
 ```
 
 #### Dependencies
+The `Tng::Gtk::Utils::Logger` class depends on the following ruby gems:
+
+* 'json';
 
 ### Cache
 The first ...
