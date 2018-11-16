@@ -35,21 +35,27 @@ require 'sinatra/config_file'
 require 'sinatra/cross_origin'
 require 'tng/gtk/utils/logger'
 
-class ApplicationController < Sinatra::Base
-  LOGGER=Tng::Gtk::Utils::Logger
-  LOGGED_COMPONENT=self.name
-  @@began_at = Time.now.utc
-  LOGGER.info(component:LOGGED_COMPONENT, operation:'initializing', start_stop: 'START', message:"Started at #{@@began_at}")
+module Tng
+  module Gtk
+    module Utils
+      class ApplicationController < Sinatra::Base
+        LOGGER=Tng::Gtk::Utils::Logger
+        LOGGED_COMPONENT=self.name
+        @@began_at = Time.now.utc
+        LOGGER.info(component:LOGGED_COMPONENT, operation:'initializing', start_stop: 'START', message:"Started at #{@@began_at}")
   
-  register Sinatra::ConfigFile
-  register Sinatra::CrossOrigin
-  enable :cross_origin
+        register Sinatra::ConfigFile
+        register Sinatra::CrossOrigin
+        enable :cross_origin
 
-  set :bind, '0.0.0.0'
-  set :environments, %w(development pre-int int demo qual staging)
-  set :began_at, Time.now.utc
-  set :environment, ENV.fetch('RACK_ENV', :development)
+        set :bind, '0.0.0.0'
+        set :environments, %w(development pre-int int demo qual staging)
+        set :began_at, Time.now.utc
+        set :environment, ENV.fetch('RACK_ENV', :development)
   
-  before { content_type :json}
-  LOGGER.info(component:LOGGED_COMPONENT, operation:'initializing', start_stop: 'STOP', message:"Ended at #{Time.now.utc}", time_elapsed:"#{Time.now.utc-began_at}")
+        before { content_type :json}
+        LOGGER.info(component:LOGGED_COMPONENT, operation:'initializing', start_stop: 'STOP', message:"Ended at #{Time.now.utc}", time_elapsed:"#{Time.now.utc-began_at}")
+      end
+    end
+  end
 end
