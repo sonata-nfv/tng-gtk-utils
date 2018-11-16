@@ -33,7 +33,6 @@
 require 'sinatra/base'
 require 'sinatra/config_file'
 require 'sinatra/cross_origin'
-require 'sinatra/activerecord'
 require 'tng/gtk/utils/logger'
 
 class ApplicationController < Sinatra::Base
