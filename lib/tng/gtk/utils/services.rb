@@ -80,17 +80,17 @@ class ServicesController < Tng::Gtk::Utils::ApplicationController
     halt 200, {}, result.to_json
   end
   
-  get '/:service_uuid/?' do 
+  get '/:uuid/?' do 
     msg='#get (single)'
     began_at = Time.now.utc
     LOGGER.info(component:LOGGED_COMPONENT, operation:msg, start_stop: 'START', message:"Started at #{began_at}")
     captures=params.delete('captures') if params.key? 'captures'
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params['service_uuid']='#{params['service_uuid']}'")
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params['uuid']='#{params['uuid']}'")
     result = FetchNSDService.call(symbolized_hash(params))
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result=#{result}")
     if result.to_s.empty? # covers nil
       LOGGER.info(component:LOGGED_COMPONENT, operation:msg, start_stop: 'STOP', message:"Ended at #{Time.now.utc}", status: '404', time_elapsed:"#{Time.now.utc-began_at}")
-      halt 404, {}, {error: ERROR_SERVICE_NOT_FOUND % params[:service_uuid]}.to_json
+      halt 404, {}, {error: ERROR_SERVICE_NOT_FOUND % params[:uuid]}.to_json
     end
     LOGGER.info(component:LOGGED_COMPONENT, operation:msg, start_stop: 'STOP', message:"Ended at #{Time.now.utc}", status: '200', time_elapsed:"#{Time.now.utc-began_at}")
     halt 200, {}, result.to_json

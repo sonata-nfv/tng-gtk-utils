@@ -43,12 +43,13 @@ module Tng
 
       class Fetch
         
+        LOGGER= Tng::Gtk::Utils::Logger
         class << self; attr_accessor :site; end
   
         def self.call(params)
           msg=self.name+'#'+__method__.to_s
           began_at=Time.now.utc
-          Tng::Gtk::Utils::Logger.info(start_stop: 'START', component:self.name, operation:__method__.to_s, message:"params=#{params} site=#{self.site}")
+           LOGGER.info(start_stop: 'START', component:self.name, operation:__method__.to_s, message:"params=#{params} site=#{self.site}")
           original_params = params.dup
           begin
             if params.key?(:uuid)
@@ -65,29 +66,29 @@ module Tng
               uri = URI.parse(self.site)
               uri.query = URI.encode_www_form(sanitize(params))
             end
-            Tng::Gtk::Utils::Logger.debug(component:self.name, operation:__method__.to_s, message:"uri=#{uri}")
+             LOGGER.debug(component:self.name, operation:__method__.to_s, message:"uri=#{uri}")
             request = Net::HTTP::Get.new(uri)
             request['content-type'] = 'application/json'
             response = Net::HTTP.start(uri.hostname, uri.port) {|http| http.request(request)}
-            Tng::Gtk::Utils::Logger.debug(component:self.name, operation:__method__.to_s, message:"response=#{response.inspect}")
+             LOGGER.debug(component:self.name, operation:__method__.to_s, message:"response=#{response.inspect}")
             case response
             when Net::HTTPSuccess
               body = response.read_body
-              Tng::Gtk::Utils::Logger.debug(component:self.name, operation:__method__.to_s, message:"body=#{body}", status: '200')
+               LOGGER.debug(component:self.name, operation:__method__.to_s, message:"body=#{body}", status: '200')
               result = JSON.parse(body, quirks_mode: true, symbolize_names: true)
               cache_result(result)
-              Tng::Gtk::Utils::Logger.info(start_stop: 'STOP', component:self.name, operation:__method__.to_s, message:"result=#{result} site=#{self.site}", time_elapsed: Time.now.utc - began_at)
+               LOGGER.info(start_stop: 'STOP', component:self.name, operation:__method__.to_s, message:"result=#{result} site=#{self.site}", time_elapsed: Time.now.utc - began_at)
               return result
             when Net::HTTPNotFound
-              Tng::Gtk::Utils::Logger.info(start_stop: 'STOP', component:self.name, operation:__method__.to_s, message:"body=#{body}", status:'404', time_elapsed: Time.now.utc - began_at)
+               LOGGER.info(start_stop: 'STOP', component:self.name, operation:__method__.to_s, message:"body=#{body}", status:'404', time_elapsed: Time.now.utc - began_at)
               return {} unless uuid.nil?
               return []
             else
-              Tng::Gtk::Utils::Logger.error(start_stop: 'STOP', component:self.name, operation:__method__.to_s, message:"#{response.message}", status:'404', time_elapsed: Time.now.utc - began_at)
+               LOGGER.error(start_stop: 'STOP', component:self.name, operation:__method__.to_s, message:"#{response.message}", status:'404', time_elapsed: Time.now.utc - began_at)
               return nil
             end
           rescue Exception => e
-            Tng::Gtk::Utils::Logger.error(start_stop: 'STOP', component:self.name, operation:__method__.to_s, message:"#{e.message}", time_elapsed: Time.now.utc - began_at)
+             LOGGER.error(start_stop: 'STOP', component:self.name, operation:__method__.to_s, message:"#{e.message}", time_elapsed: Time.now.utc - began_at)
           end
           nil
         end
@@ -100,15 +101,15 @@ module Tng
         end
   
         def self.cache_result(result)
-          Tng::Gtk::Utils::Logger.debug(component:self.name, operation:__method__.to_s, message:"result=#{result}")
+           LOGGER.debug(component:self.name, operation:__method__.to_s, message:"result=#{result}")
           if result.is_a?(Hash)      
-            STDERR.puts "Caching #{result}"
+            LOGGER.info(component:self.name, operation:__method__.to_s, message:"Caching #{result}")
             Tng::Gtk::Utils::Cache.cache(result)
             return
           end
-          STDERR.puts "#{result} is not an Hash"
+           LOGGER.info(component:self.name, operation:__method__.to_s, message:"#{result} is not an Hash")
           result.each do |record|
-            STDERR.puts "Caching #{record}"
+             LOGGER.info(component:self.name, operation:__method__.to_s, message:"Caching #{record}")
             Tng::Gtk::Utils::Cache.cache(record)
           end
         end
