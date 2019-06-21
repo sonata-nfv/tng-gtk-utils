@@ -75,28 +75,23 @@ module Tng
         class << self; attr_accessor :strategy; end
 
         self.strategy = ENV['REDIS_URL'] ? STRATEGIES[:redis] : STRATEGIES[:memory]
-        LOGGER.info(start_stop: 'START', component:LOG_COMPONENT, operation:'class definition', message:"Strategy used: #{self.strategy}") 
 
         def self.cache(record)
           unless record.key?(:uuid)
             LOGGER.error(component: LOG_COMPONENT, operation:__method__.to_s, message:"key :uuid is missing in record #{record}") 
             return nil
           end
-          LOGGER.info(component: LOG_COMPONENT, operation:__method__.to_s, message:"key '#{CACHE_PREFIX}:#{record[:uuid]}' with value '#{record}' (strategy #{self.strategy})") 
           self.strategy.set("#{CACHE_PREFIX}:#{record[:uuid]}", record.to_json)
           record
         end
         def self.cached?(key)
-          LOGGER.info(component: LOG_COMPONENT, operation:__method__.to_s, message:"key '#{CACHE_PREFIX}:#{key}' (strategy #{self.strategy})")
           data = self.strategy.get("#{CACHE_PREFIX}:#{key}")
           return '' if data.nil?
           JSON.parse(data, symbolize_names: :true) 
         end
         def self.clear(key)
-          LOGGER.info(component: LOG_COMPONENT, operation:__method__.to_s, message:"key '#{key}' (strategy #{self.strategy})")
           self.strategy.del(key)
         end
-        LOGGER.info(start_stop: 'STOP', component:LOG_COMPONENT, operation:'class definition', message:"Strategy used: #{self.strategy}") 
       end
     end
   end

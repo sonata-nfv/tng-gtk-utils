@@ -41,8 +41,6 @@ module Tng
       class ApplicationController < Sinatra::Base
         LOGGER=Tng::Gtk::Utils::Logger
         LOGGED_COMPONENT=self.name
-        @@began_at = Time.now.utc
-        LOGGER.info(component:LOGGED_COMPONENT, operation:'initializing', start_stop: 'START', message:"Started at #{@@began_at}")
   
         register Sinatra::ConfigFile
         register Sinatra::CrossOrigin
@@ -54,7 +52,6 @@ module Tng
         set :environment, ENV.fetch('RACK_ENV', :development)
   
         before { content_type :json}
-        LOGGER.info(component:LOGGED_COMPONENT, operation:'initializing', start_stop: 'STOP', message:"Ended at #{Time.now.utc}", time_elapsed:"#{Time.now.utc-began_at}")
       end
     end
   end

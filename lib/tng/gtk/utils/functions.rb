@@ -37,11 +37,11 @@ require 'tng/gtk/utils/application_controller'
 require 'tng/gtk/utils/logger'
 require 'tng/gtk/utils/fetch'
 
-LOGGER=Tng::Gtk::Utils::Logger
 
 class FetchVNFDsService < Tng::Gtk::Utils::Fetch
   NO_CATALOGUE_URL_DEFINED_ERROR='The CATALOGUE_URL ENV variable needs to defined and pointing to the Catalogue where to fetch functions'
   LOGGED_COMPONENT=self.name
+  LOGGER=Tng::Gtk::Utils::Logger
   
   CATALOGUE_URL = ENV.fetch('CATALOGUE_URL', '')
   if CATALOGUE_URL == ''
@@ -49,60 +49,40 @@ class FetchVNFDsService < Tng::Gtk::Utils::Fetch
     raise ArgumentError.new(NO_CATALOGUE_URL_DEFINED_ERROR) 
   end
   self.site=CATALOGUE_URL+'/vnfs'
-  LOGGER.info(component:LOGGED_COMPONENT, operation:'site definition', message:"self.site=#{self.site}")
 end
 
 class FunctionsController < Tng::Gtk::Utils::ApplicationController
 
   ERROR_FUNCTION_NOT_FOUND="No function with UUID '%s' was found"
   LOGGED_COMPONENT=self.name
-  @@began_at = Time.now.utc
-  LOGGER.info(component:LOGGED_COMPONENT, operation:'initializing', start_stop: 'START', message:"Started at #{@@began_at}")
   
   get '/?' do 
     msg='#get (many)'
-    began_at = Time.now.utc
-    LOGGER.info(component:LOGGED_COMPONENT, operation:msg, start_stop: 'START', message:"Started at #{began_at}")
     captures=params.delete('captures') if params.key? 'captures'
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params=#{params}")
     result = FetchVNFDsService.call(symbolized_hash(params))
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result=#{result}")
     if result.to_s.empty? # covers nil
-      LOGGER.info(component:LOGGED_COMPONENT, operation:msg, start_stop: 'STOP', message:"Ended at #{Time.now.utc}", status: '404', time_elapsed:"#{Time.now.utc-began_at}")
       halt 404, {}, {error: "No functions fiting the provided parameters ('#{params}') were found"}.to_json
     end
-    LOGGER.info(component:LOGGED_COMPONENT, operation:msg, start_stop: 'STOP', message:"Ended at #{Time.now.utc}", status: '200', time_elapsed:"#{Time.now.utc-began_at}")
     halt 200, {}, result.to_json
   end
   
   get '/:function_uuid/?' do 
     msg='#get (single)'
-    began_at = Time.now.utc
-    LOGGER.info(component:LOGGED_COMPONENT, operation:msg, start_stop: 'START', message:"Started at #{began_at}")
     captures=params.delete('captures') if params.key? 'captures'
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params['function_uuid']='#{params['function_uuid']}'")
     result = FetchVNFDsService.call(uuid: params['function_uuid'])
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result=#{result}")
     if result == {}
-      LOGGER.info(component:LOGGED_COMPONENT, operation:msg, start_stop: 'STOP', message:"Ended at #{Time.now.utc}", status: '404', time_elapsed:"#{Time.now.utc-began_at}")
       halt 404, {}, {error: ERROR_FUNCTION_NOT_FOUND % params['function_uuid']}.to_json
     end
-    LOGGER.info(component:LOGGED_COMPONENT, operation:msg, start_stop: 'STOP', message:"Ended at #{Time.now.utc}", status: '200', time_elapsed:"#{Time.now.utc-began_at}")
     halt 200, {}, result.to_json
   end
   
   options '/?' do
     msg='#options'
-    began_at = Time.now.utc
-    LOGGER.info(component:LOGGED_COMPONENT, operation:msg, start_stop: 'START', message:"Started at #{began_at}")
     response.headers['Access-Control-Allow-Origin'] = '*'
     response.headers['Access-Control-Allow-Methods'] = 'GET,DELETE'      
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With'
-    LOGGER.info(component:LOGGED_COMPONENT, operation:msg, start_stop: 'STOP', message:"Ended at #{Time.now.utc}", status: '200', time_elapsed:"#{Time.now.utc-began_at}")
     halt 200
   end
-  
-  LOGGER.info(component:LOGGED_COMPONENT, operation:'initializing', start_stop: 'STOP', message:"Ending at #{Time.now.utc}", time_elapsed: Time.now.utc - @@began_at)
   
   private
   def uuid_valid?(uuid)
