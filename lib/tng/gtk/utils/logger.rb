@@ -39,7 +39,6 @@ module Tng
       class Logger
         LOGFILE = ENV.fetch('LOGFILE', STDOUT)
         LOGLEVEL = ENV.fetch('LOGLEVEL', 'info')
-        #LOGGER_LEVELS = ['debug', 'info', 'warn', 'error', 'fatal', 'unknown'].freeze
         LOGGER_LEVELS = ['D', 'I', 'W', 'E', 'F', 'U'].freeze
         
         class << self
@@ -66,13 +65,13 @@ module Tng
           def generic(type:, start_stop:, component:, operation:, message:, status:, time_elapsed:) 
             message = {
               type: type,                 # mandatory, can be I(nfo), W(arning), D(ebug), E(rror), F(atal) or U(nknown)
-              timestamp: Time.now.utc, # mandatory
-              start_stop: start_stop,                    # optional, can be empty, 'START' or 'STOP'
-              component: component,             # mandatory
-              operation: operation,          # mandatory
-              message: message,      # mandatory
-              status: status,                        # optional, makes sense for start_stop='END'
-              time_elapsed: time_elapsed              # optional, makes sense for start_stop='END'
+              app_timestamp: Time.now.utc,# mandatory
+              start_stop: start_stop,     # optional, can be empty, 'START' or 'STOP'
+              component: component,       # mandatory
+              operation: operation,       # mandatory
+              message: message,           # mandatory
+              status: status,             # optional, makes sense for start_stop='END'
+              time_elapsed: time_elapsed  # optional, makes sense for start_stop='END'
             }
             LOGFILE.puts "#{message.to_json}" if log?(type)
             message
@@ -86,47 +85,3 @@ module Tng
     end
   end
 end
-=begin
-LOGLEVEL
-Unknown: a message that should always be logged, whatever the logging level set;
-Fatal: an unhandleable error ocurred;
-Error: a handleable error occurred. The service the component delivers should not be interrupted (i.e., it should be able to recover from the error);
-Warning: a warning message;
-Info: a generic (but useful) information about system operation;
-Debug: a low-level information for developers;
-
-{
-  "type": "I",                 # mandatory, can be I(nfo), W(arning), D(ebug), E(rror), F(atal) or U(nknown)
-  "timestamp": "2018-10-18 15:49:08 UTC", # mandatory
-  "start_stop": "END",                    # optional, can be empty, 'START' or 'STOP'
-  "component": "tng-api-gtw",             # mandatory
-  "operation": "package upload",          # mandatory
-  "message": "package uploaded 201",      # mandatory
-  "status": "201",                        # optional, makes sense for start_stop='END'
-  "time_elapsed": "00:01:20"              # optional, makes sense for start_stop='END'
-}
-
-  LOGGER_LEVELS = ['debug', 'info', 'warn', 'error', 'fatal', 'unknown'].freeze
-  FORMAT = %{%s - %s [%s] "%s %s%s %s" %d %s %0.4f\n}
-  
-  def initialize(app, options = {})
-    @app = app
-    @error_io = options[:logger_io]
-    @logger = Logger.new(@error_io)
-    @error_io.sync = true
-    @logger_level = LOGGER_LEVELS.find_index(options[:logger_level].downcase ||= 'debug')
-  end
-  
-
-  def call(env)
-    msg = self.class.name+'#'+__method__.to_s
-    env['5gtango.error']=@error_io
-    env['5gtango.logger']=@logger
-    @logger.info(msg) {"Called"}
-
-    status, headers, body = @app.call(env)
-    @logger.info(msg) {"Finishing with status #{status}"}
-    [status, headers, body]
-  end
-
-=end
