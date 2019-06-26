@@ -65,7 +65,7 @@ module Tng
           def generic(type:, start_stop:, component:, operation:, message:, status:, time_elapsed:) 
             message = {
               type: type,                 # mandatory, can be I(nfo), W(arning), D(ebug), E(rror), F(atal) or U(nknown)
-              app_timestamp: Time.now.utc,# mandatory
+              app_timestamp: Time.now.utc.strftime("%Y-%m-%e %H:%M:%S.%6N %Z" ), # mandatory, with miliseconds
               start_stop: start_stop,     # optional, can be empty, 'START' or 'STOP'
               component: component,       # mandatory
               operation: operation,       # mandatory
